@@ -1,0 +1,499 @@
+.auditor-hero {
+    position: relative;
+    display: flex;
+    min-height: 220px;
+    overflow: hidden;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: clamp(25px, 4vw, 42px);
+    border: 1px solid rgba(126, 249, 192, 0.13);
+    border-radius: 22px;
+    background:
+        radial-gradient(26rem 19rem at 83% 48%, rgba(46, 230, 138, 0.15), transparent 68%),
+        linear-gradient(120deg, rgba(17, 37, 27, 0.96), rgba(11, 25, 18, 0.91));
+    box-shadow: var(--portal-shadow);
+}
+
+.auditor-hero > div:first-child {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+}
+
+.auditor-hero h1,
+.auditor-section-heading h2 {
+    margin: 0;
+    color: var(--portal-text);
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(1.75rem, 3vw, 2.35rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+}
+
+.auditor-hero p,
+.auditor-section-heading p {
+    margin: 8px 0 18px;
+    color: var(--portal-muted);
+    font-size: 0.86rem;
+}
+
+.auditor-hero-icon {
+    display: grid;
+    width: clamp(100px, 14vw, 150px);
+    height: clamp(100px, 14vw, 150px);
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid rgba(126, 249, 192, 0.16);
+    border-radius: 34px;
+    background: rgba(46, 230, 138, 0.08);
+    color: var(--portal-green-light);
+    font-size: clamp(2.8rem, 5vw, 4.1rem);
+    transform: rotate(7deg);
+}
+
+.auditor-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 13px;
+    margin: 18px 0 28px;
+}
+
+.auditor-metric {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 13px;
+    padding: 17px;
+    border: 1px solid var(--portal-border);
+    border-radius: 15px;
+    background: var(--portal-surface);
+}
+
+.auditor-metric-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    place-items: center;
+    border-radius: 13px;
+    background: rgba(46, 230, 138, 0.12);
+    color: var(--portal-green-light);
+}
+
+.auditor-metric-icon.is-blue {
+    background: rgba(99, 180, 255, 0.12);
+    color: #83c5ff;
+}
+
+.auditor-metric-icon.is-purple {
+    background: rgba(190, 151, 255, 0.12);
+    color: #c7a8ff;
+}
+
+.auditor-metric div {
+    display: grid;
+    min-width: 0;
+}
+
+.auditor-metric small {
+    color: var(--portal-muted);
+    font-size: 0.7rem;
+}
+
+.auditor-metric strong {
+    margin-top: 1px;
+    color: var(--portal-text);
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.45rem;
+    line-height: 1.2;
+}
+
+.auditor-panel {
+    padding: clamp(18px, 2.3vw, 27px);
+    border: 1px solid var(--portal-border);
+    border-radius: 19px;
+    background: rgba(12, 24, 18, 0.68);
+}
+
+.auditor-section-heading {
+    margin-bottom: 18px;
+}
+
+.auditor-section-heading h2 {
+    font-size: 1.45rem;
+}
+
+.auditor-section-heading p {
+    margin: 5px 0 0;
+}
+
+.auditor-filters {
+    display: grid;
+    grid-template-columns: minmax(200px, 1.5fr) repeat(4, minmax(125px, 0.8fr)) auto;
+    align-items: end;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.auditor-filters label {
+    display: grid;
+    min-width: 0;
+    gap: 5px;
+}
+
+.auditor-filters label > span {
+    color: var(--portal-muted);
+    font-size: 0.66rem;
+    font-weight: 600;
+}
+
+.auditor-filters input,
+.auditor-filters select {
+    width: 100%;
+    min-height: 39px;
+    padding: 8px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 9px;
+    outline: 0;
+    background: #0c1711;
+    color: var(--portal-text);
+    font-size: 0.7rem;
+}
+
+.auditor-filters input:focus,
+.auditor-filters select:focus {
+    border-color: rgba(46, 230, 138, 0.55);
+}
+
+.auditor-filter-actions {
+    display: flex;
+    min-height: 39px;
+    align-items: center;
+    gap: 10px;
+}
+
+.auditor-filter-actions .portal-button {
+    min-height: 38px;
+    padding: 8px 10px;
+    white-space: nowrap;
+    font-size: 0.7rem;
+}
+
+.auditor-reset-link {
+    color: var(--portal-muted) !important;
+    font-size: 0.7rem;
+    white-space: nowrap;
+}
+
+.auditor-reset-link:hover {
+    color: var(--portal-green-light) !important;
+}
+
+.auditor-record-list {
+    display: grid;
+    gap: 9px;
+}
+
+.auditor-record {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.065);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.auditor-record-icon {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    place-items: center;
+    border-radius: 11px;
+    background: rgba(46, 230, 138, 0.1);
+    color: var(--portal-green-light);
+}
+
+.auditor-record-main {
+    min-width: 0;
+    flex: 1;
+}
+
+.auditor-record-heading {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.auditor-record-heading strong {
+    overflow: hidden;
+    color: var(--portal-text);
+    font-size: 0.78rem;
+    text-overflow: ellipsis;
+}
+
+.auditor-operation {
+    padding: 3px 7px;
+    border: 1px solid rgba(126, 249, 192, 0.14);
+    border-radius: 99px;
+    background: rgba(46, 230, 138, 0.07);
+    color: var(--portal-green-light);
+    font-size: 0.62rem;
+}
+
+.auditor-record-main > p {
+    margin: 5px 0 8px;
+    color: var(--portal-muted);
+    font-size: 0.73rem;
+    overflow-wrap: anywhere;
+}
+
+.auditor-record-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 14px;
+    color: var(--portal-dim);
+    font-size: 0.65rem;
+}
+
+.auditor-record-meta i {
+    margin-right: 4px;
+    color: var(--portal-green-light);
+}
+
+.auditor-snapshot {
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.auditor-snapshot summary {
+    width: fit-content;
+    padding: 9px 0 2px;
+    color: var(--portal-green-light);
+    cursor: pointer;
+    font-size: 0.68rem;
+}
+
+.auditor-snapshot-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.auditor-snapshot-grid > div {
+    min-width: 0;
+}
+
+.auditor-snapshot-grid strong {
+    color: var(--portal-muted);
+    font-size: 0.65rem;
+}
+
+.auditor-snapshot-grid pre {
+    max-height: 240px;
+    overflow: auto;
+    margin: 5px 0 0;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 9px;
+    background: rgba(0, 0, 0, 0.18);
+    color: var(--portal-text);
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.63rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.auditor-record > time {
+    flex: 0 0 auto;
+    color: var(--portal-dim);
+    font-size: 0.65rem;
+    white-space: nowrap;
+}
+
+.auditor-empty {
+    display: grid;
+    min-height: 190px;
+    place-content: center;
+    justify-items: center;
+    gap: 7px;
+    padding: 20px;
+    border: 1px dashed rgba(126, 249, 192, 0.14);
+    border-radius: 14px;
+    color: var(--portal-muted);
+    text-align: center;
+}
+
+.auditor-empty > i {
+    margin-bottom: 4px;
+    color: var(--portal-green-light);
+    font-size: 1.35rem;
+}
+
+.auditor-empty strong {
+    color: var(--portal-text);
+    font-size: 0.85rem;
+}
+
+.auditor-empty span {
+    font-size: 0.74rem;
+}
+
+.auditor-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 17px;
+    color: var(--portal-muted);
+    font-size: 0.72rem;
+}
+
+.auditor-pagination > div {
+    display: flex;
+    gap: 8px;
+}
+
+.auditor-pagination a {
+    padding: 8px 11px;
+    border: 1px solid var(--portal-border);
+    border-radius: 9px;
+    color: var(--portal-text) !important;
+}
+
+.auditor-pagination a:hover {
+    border-color: rgba(46, 230, 138, 0.35);
+    color: var(--portal-green-light) !important;
+}
+
+.auditor-footer {
+    padding: 24px 0 4px;
+    color: var(--portal-dim);
+    font-size: 0.68rem;
+    text-align: center;
+}
+
+.auditor-setup-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-bottom: 15px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 198, 109, 0.25);
+    border-radius: 11px;
+    background: rgba(145, 96, 24, 0.13);
+    color: #ffdaa0;
+    font-size: 0.76rem;
+}
+
+.auditor-setup-warning i {
+    margin-top: 2px;
+}
+
+.auditor-setup-warning code {
+    color: #fff0d2;
+}
+
+@media (max-width: 1200px) {
+    .auditor-filters {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .auditor-filter-search {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 760px) {
+    .auditor-body .portal-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .auditor-body .portal-sidebar {
+        position: relative;
+        height: auto;
+        padding: 15px;
+        border-right: 0;
+        border-bottom: 1px solid var(--portal-border);
+    }
+
+    .auditor-body .portal-sidebar-caption {
+        margin-bottom: 12px;
+    }
+
+    .auditor-body .portal-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .auditor-body .portal-nav-link {
+        justify-content: center;
+        gap: 7px;
+        padding-inline: 7px;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .auditor-body .portal-main {
+        padding: 18px 14px 34px;
+    }
+
+    .auditor-hero {
+        min-height: 190px;
+    }
+
+    .auditor-hero-icon {
+        position: absolute;
+        right: -20px;
+        bottom: -25px;
+        width: 105px;
+        height: 105px;
+        font-size: 2.7rem;
+        opacity: 0.55;
+    }
+
+    .auditor-metrics {
+        grid-template-columns: 1fr;
+        gap: 9px;
+    }
+
+    .auditor-metric {
+        padding: 13px;
+    }
+
+    .auditor-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .auditor-filter-search {
+        grid-column: span 2;
+    }
+
+    .auditor-filter-actions {
+        grid-column: span 2;
+    }
+
+    .auditor-record {
+        flex-wrap: wrap;
+    }
+
+    .auditor-record-main {
+        flex: 1 1 calc(100% - 50px);
+    }
+
+    .auditor-record > time {
+        margin-left: 48px;
+    }
+
+    .auditor-snapshot-grid {
+        grid-template-columns: 1fr;
+    }
+}

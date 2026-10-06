@@ -77,8 +77,20 @@ $usuarioSesion = $_SESSION['usuario'] ?? null;
                                 <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($usuarioSesion['nombre'] ?: 'Mi Cuenta'); ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
-                                <?php if (($usuarioSesion['rol'] ?? '') === 'admin'): ?>
+                                <?php if (strcasecmp((string) ($usuarioSesion['rol'] ?? ''), 'Administrador') === 0): ?>
                                     <li><a class="dropdown-item" href="admin_panel.php"><i class="bi bi-speedometer2 me-2"></i>Panel Admin</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                <?php elseif (in_array($usuarioSesion['rol'] ?? '', ['Usuario', 'Vendedor'], true)): ?>
+                                    <li><a class="dropdown-item" href="user_panel.php"><i class="bi bi-grid me-2"></i>Mi espacio EcoTech</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                <?php elseif (strcasecmp((string) ($usuarioSesion['rol'] ?? ''), 'Operador') === 0): ?>
+                                    <li><a class="dropdown-item" href="operator_panel.php"><i class="bi bi-inbox me-2"></i>Bandeja de recogidas</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                <?php elseif (strcasecmp((string) ($usuarioSesion['rol'] ?? ''), 'Tecnico') === 0): ?>
+                                    <li><a class="dropdown-item" href="tecnico.php"><i class="bi bi-tools me-2"></i>Panel Técnico</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                <?php elseif (strcasecmp((string) ($usuarioSesion['rol'] ?? ''), 'Auditor') === 0): ?>
+                                    <li><a class="dropdown-item" href="auditor_panel.php"><i class="bi bi-clipboard2-data me-2"></i>Panel de Auditoría</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                 <?php endif; ?>
                                 <li><a class="dropdown-item text-danger" href="../php/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>

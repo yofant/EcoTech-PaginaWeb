@@ -2,7 +2,7 @@
 if (!defined('ECOTECH_ADMIN_USUARIOS')) {
     define('ECOTECH_ADMIN_USUARIOS', true);
 
-    $rolesPermitidosUsuarios = ['admin', 'cliente', 'operador', 'tecnico'];
+    $rolesPermitidosUsuarios = ['Administrador', 'Tecnico', 'Operador', 'Auditor', 'Usuario', 'Vendedor'];
     $crudMessage = null;
     $crudMessageType = null;
     $modoFormulario = 'crear';
@@ -12,7 +12,8 @@ if (!defined('ECOTECH_ADMIN_USUARIOS')) {
         'primer_apellido' => '',
         'segundo_apellido' => '',
         'correo' => '',
-        'rol' => 'cliente',
+        'telefono' => '',
+        'rol' => 'Operador',
         'contrasena' => ''
     ];
     $usuarios = [];
@@ -27,7 +28,6 @@ if (!defined('ECOTECH_ADMIN_USUARIOS')) {
     }
 
     $estadoCrud = $_GET['crud_status'] ?? '';
-
     if ($estadoCrud === 'created') {
         $crudMessage = 'Usuario creado correctamente.';
         $crudMessageType = 'success';
@@ -55,13 +55,15 @@ if (!defined('ECOTECH_ADMIN_USUARIOS')) {
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['crud_action'] ?? '') === 'save_user')) {
-        $id = isset($_POST['id']) ? (int) $_POST['id'] : 0;
+        $id = (int) ($_POST['id'] ?? 0);
         $nombre = trim($_POST['nombre'] ?? '');
         $primerApellido = trim($_POST['primer_apellido'] ?? '');
         $segundoApellido = trim($_POST['segundo_apellido'] ?? '');
+        $apellido = trim($primerApellido . ' ' . $segundoApellido);
         $correo = trim($_POST['correo'] ?? '');
+        $telefono = trim($_POST['telefono'] ?? '');
         $rol = trim($_POST['rol'] ?? '');
-        $contrasena = trim($_POST['contrasena'] ?? '');
+        $contrasena = $_POST['contrasena'] ?? '';
         $modoFormulario = $id > 0 ? 'editar' : 'crear';
 
         $usuarioForm = [
@@ -70,15 +72,18 @@ if (!defined('ECOTECH_ADMIN_USUARIOS')) {
             'primer_apellido' => $primerApellido,
             'segundo_apellido' => $segundoApellido,
             'correo' => $correo,
+            'telefono' => $telefono,
             'rol' => $rol,
             'contrasena' => ''
         ];
 
         if (
             $nombre === '' ||
-            $primerApellido === '' ||
-            $segundoApellido === '' ||
+            $apellido === '' ||
             !filter_var($correo, FILTER_VALIDATE_EMAIL) ||
+            strlen($correo) > 150 ||
+            $telefono === '' ||
+            strlen($telefono) > 20 ||
             !in_array($rol, $rolesPermitidosUsuarios, true) ||
             ($id === 0 && $contrasena === '')
         ) {
@@ -86,11 +91,10 @@ if (!defined('ECOTECH_ADMIN_USUARIOS')) {
             $crudMessageType = 'error';
         } else {
             if ($id > 0) {
-                $consultaActual = $conn->prepare("SELECT correo FROM usuarios WHERE id_usuario = ?");
+                $consultaActual = $conn->prepare("SELECT email FROM `Usuarios` WHERE usuario_id = ?");
                 $consultaActual->bind_param("i", $id);
                 $consultaActual->execute();
-                $resultadoActual = $consultaActual->get_result();
-                $usuarioActual = $resultadoActual->fetch_assoc();
+                $usuarioActual = $consultaActual->get_result()->fetch_assoc();
                 $consultaActual->close();
 
                 if (!$usuarioActual) {
@@ -100,114 +104,72 @@ if (!defined('ECOTECH_ADMIN_USUARIOS')) {
                 if ($contrasena !== '') {
                     $hash = password_hash($contrasena, PASSWORD_DEFAULT);
                     $stmt = $conn->prepare("
-                        UPDATE usuarios
-                        SET nombre = ?, primer_apellido = ?, segundo_apellido = ?, correo = ?, contrasena = ?, rol = ?
-                        WHERE id_usuario = ?
+                        UPDATE `Usuarios`
+                        SET nombre = ?, apellido = ?, email = ?, telefono = ?, rol = ?, password_hash = ?
+                        WHERE usuario_id = ?
                     ");
-                    $stmt->bind_param(
-                        "ssssssi",
-                        $nombre,
-                        $primerApellido,
-                        $segundoApellido,
-                        $correo,
-                        $hash,
-                        $rol,
-                        $id
-                    );
+                    $stmt->bind_param("ssssssi", $nombre, $apellido, $correo, $telefono, $rol, $hash, $id);
                 } else {
                     $stmt = $conn->prepare("
-                        UPDATE usuarios
-                        SET nombre = ?, primer_apellido = ?, segundo_apellido = ?, correo = ?, rol = ?
-                        WHERE id_usuario = ?
+                        UPDATE `Usuarios`
+                        SET nombre = ?, apellido = ?, email = ?, telefono = ?, rol = ?
+                        WHERE usuario_id = ?
                     ");
-                    $stmt->bind_param(
-                        "sssssi",
-                        $nombre,
-                        $primerApellido,
-                        $segundoApellido,
-                        $correo,
-                        $rol,
-                        $id
-                    );
+                    $stmt->bind_param("sssssi", $nombre, $apellido, $correo, $telefono, $rol, $id);
                 }
 
                 if ($stmt->execute()) {
-                    if (($usuarioActual['correo'] ?? '') === ($_SESSION['usuario']['correo'] ?? '')) {
+                    if (($usuarioActual['email'] ?? '') === ($_SESSION['usuario']['correo'] ?? '')) {
                         $_SESSION['usuario']['nombre'] = $nombre;
+                        $_SESSION['usuario']['apellido'] = $apellido;
                         $_SESSION['usuario']['correo'] = $correo;
                         $_SESSION['usuario']['rol'] = $rol;
                     }
-
                     $stmt->close();
                     adminUsuariosRedirect(['crud_status' => 'updated']);
                 }
 
                 $codigoError = $stmt->errno;
                 $stmt->close();
-
-                if ($codigoError === 1062) {
-                    $crudMessage = 'El correo ingresado ya existe en otro usuario.';
-                    $crudMessageType = 'error';
-                } else {
-                    $crudMessage = 'No fue posible actualizar el usuario.';
-                    $crudMessageType = 'error';
-                }
-            } else {
-                $hash = password_hash($contrasena, PASSWORD_DEFAULT);
-                $stmt = $conn->prepare("
-                    INSERT INTO usuarios (nombre, primer_apellido, segundo_apellido, correo, contrasena, rol)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ");
-                $stmt->bind_param(
-                    "ssssss",
-                    $nombre,
-                    $primerApellido,
-                    $segundoApellido,
-                    $correo,
-                    $hash,
-                    $rol
-                );
-
-                if ($stmt->execute()) {
-                    $stmt->close();
-                    adminUsuariosRedirect(['crud_status' => 'created']);
-                }
-
-                $codigoError = $stmt->errno;
-                $stmt->close();
-
-                if ($codigoError === 1062) {
-                    $crudMessage = 'El correo ingresado ya existe en la base de datos.';
-                    $crudMessageType = 'error';
-                } else {
-                    $crudMessage = 'No fue posible crear el usuario.';
-                    $crudMessageType = 'error';
-                }
+                adminUsuariosRedirect(['crud_status' => $codigoError === 1062 ? 'duplicate' : 'db_error']);
             }
+
+            $hash = password_hash($contrasena, PASSWORD_DEFAULT);
+            $stmt = $conn->prepare("
+                INSERT INTO `Usuarios` (nombre, apellido, email, telefono, rol, password_hash)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->bind_param("ssssss", $nombre, $apellido, $correo, $telefono, $rol, $hash);
+
+            if ($stmt->execute()) {
+                $stmt->close();
+                adminUsuariosRedirect(['crud_status' => 'created']);
+            }
+
+            $codigoError = $stmt->errno;
+            $stmt->close();
+            adminUsuariosRedirect(['crud_status' => $codigoError === 1062 ? 'duplicate' : 'db_error']);
         }
     }
 
     if (($_GET['user_action'] ?? '') === 'delete' && isset($_GET['id'])) {
         $idEliminar = (int) $_GET['id'];
-
-        $consultaEliminar = $conn->prepare("SELECT correo FROM usuarios WHERE id_usuario = ?");
+        $consultaEliminar = $conn->prepare("SELECT email FROM `Usuarios` WHERE usuario_id = ?");
         $consultaEliminar->bind_param("i", $idEliminar);
         $consultaEliminar->execute();
-        $resultadoEliminar = $consultaEliminar->get_result();
-        $usuarioEliminar = $resultadoEliminar->fetch_assoc();
+        $usuarioEliminar = $consultaEliminar->get_result()->fetch_assoc();
         $consultaEliminar->close();
 
         if (!$usuarioEliminar) {
             adminUsuariosRedirect(['crud_status' => 'not_found']);
         }
 
-        if (($usuarioEliminar['correo'] ?? '') === ($_SESSION['usuario']['correo'] ?? '')) {
+        if (($usuarioEliminar['email'] ?? '') === ($_SESSION['usuario']['correo'] ?? '')) {
             adminUsuariosRedirect(['crud_status' => 'self_delete']);
         }
 
-        $stmtEliminar = $conn->prepare("DELETE FROM usuarios WHERE id_usuario = ?");
+        $stmtEliminar = $conn->prepare("DELETE FROM `Usuarios` WHERE usuario_id = ?");
         $stmtEliminar->bind_param("i", $idEliminar);
-
         if ($stmtEliminar->execute()) {
             $stmtEliminar->close();
             adminUsuariosRedirect(['crud_status' => 'deleted']);
@@ -220,44 +182,48 @@ if (!defined('ECOTECH_ADMIN_USUARIOS')) {
     if (($_GET['user_action'] ?? '') === 'edit' && isset($_GET['id'])) {
         $idEditar = (int) $_GET['id'];
         $consultaEditar = $conn->prepare("
-            SELECT id_usuario AS id, nombre, primer_apellido, segundo_apellido, correo, rol
-            FROM usuarios
-            WHERE id_usuario = ?
+            SELECT usuario_id AS id, nombre, apellido, email, telefono, rol
+            FROM `Usuarios`
+            WHERE usuario_id = ?
         ");
         $consultaEditar->bind_param("i", $idEditar);
         $consultaEditar->execute();
-        $resultadoEditar = $consultaEditar->get_result();
-        $usuarioEditar = $resultadoEditar->fetch_assoc();
+        $usuarioEditar = $consultaEditar->get_result()->fetch_assoc();
         $consultaEditar->close();
 
-        if ($usuarioEditar) {
-            $modoFormulario = 'editar';
-            $usuarioForm = [
-                'id' => $usuarioEditar['id'] ?? '',
-                'nombre' => $usuarioEditar['nombre'] ?? '',
-                'primer_apellido' => $usuarioEditar['primer_apellido'] ?? '',
-                'segundo_apellido' => $usuarioEditar['segundo_apellido'] ?? '',
-                'correo' => $usuarioEditar['correo'] ?? '',
-                'rol' => $usuarioEditar['rol'] ?? 'cliente',
-                'contrasena' => ''
-            ];
-        } else {
+        if (!$usuarioEditar) {
             adminUsuariosRedirect(['crud_status' => 'not_found']);
         }
+
+        $apellidos = preg_split('/\s+/', trim($usuarioEditar['apellido'] ?? ''), 2);
+        $modoFormulario = 'editar';
+        $usuarioForm = [
+            'id' => $usuarioEditar['id'],
+            'nombre' => $usuarioEditar['nombre'] ?? '',
+            'primer_apellido' => $apellidos[0] ?? '',
+            'segundo_apellido' => $apellidos[1] ?? '',
+            'correo' => $usuarioEditar['email'] ?? '',
+            'telefono' => $usuarioEditar['telefono'] ?? '',
+            'rol' => $usuarioEditar['rol'] ?? 'Operador',
+            'contrasena' => ''
+        ];
     }
 
-    $consultaUsuarios = "
-        SELECT id_usuario AS id, nombre, primer_apellido, segundo_apellido, correo, rol
-        FROM usuarios
-        ORDER BY id_usuario DESC
-    ";
+    $resultadoUsuarios = $conn->query("
+        SELECT usuario_id AS id, nombre, apellido, email, telefono, rol
+        FROM `Usuarios`
+        ORDER BY usuario_id DESC
+    ");
+    if (!$resultadoUsuarios) {
+        die("Error al consultar usuarios: " . $conn->error);
+    }
 
-    $resultadoUsuarios = $conn->query($consultaUsuarios);
-
-    if ($resultadoUsuarios) {
-        while ($fila = $resultadoUsuarios->fetch_assoc()) {
-            $usuarios[] = $fila;
-        }
+    while ($fila = $resultadoUsuarios->fetch_assoc()) {
+        $apellidos = preg_split('/\s+/', trim($fila['apellido'] ?? ''), 2);
+        $fila['primer_apellido'] = $apellidos[0] ?? '';
+        $fila['segundo_apellido'] = $apellidos[1] ?? '';
+        $fila['correo'] = $fila['email'];
+        $usuarios[] = $fila;
     }
 }
 ?>

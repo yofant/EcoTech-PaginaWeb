@@ -1,122 +1,34 @@
-# Base de datos
+# Base de datos EcoTech
 
-## Resumen
+El esquema que consume el backend se encuentra en [`db/ECOTECH_KTOR_SCHEMA.sql`](../db/ECOTECH_KTOR_SCHEMA.sql). Crea la base `ecotech` y las tablas `Usuarios`, `Donantes`, `Ciudades`, `TiposEquipo`, `Equipos`, `Diagnosticos`, `Reparaciones`, `Beneficiarios`, `Entregas` y `Auditoria`.
 
-El proyecto no incluye un archivo `.sql` en el repositorio, pero el backend actual permite inferir la estructura minima necesaria para que funcionen el registro y el login.
+Importa ese archivo en MySQL/MariaDB antes de usar la aplicación. El script recrea sus tablas (usa `DROP TABLE`), por lo que no debe ejecutarse sobre una base con datos que se deban conservar sin antes respaldarla.
 
-Este documento describe esa estructura inferida a partir de:
+Para habilitar chats, publicaciones y puntos de entrega, importa una sola vez [`db/user_portal_schema.sql`](../db/user_portal_schema.sql) después del esquema principal. Es una migración aditiva: añade el indicador de publicación a `Equipos` y crea las tablas `Conversaciones`, `Mensajes` y `PuntosRecoleccion`. No contiene direcciones ficticias; un administrador debe cargar ubicaciones verificadas desde el panel.
 
-- `php/conexion.php`
-- `php/registro.php`
-- `php/login.php`
-- Modulos del panel admin (`php/admin_*.php`) y listados en `php/admin_acciones.php`
+Para habilitar el historial completo, ejecuta una sola vez `db/auditoria_schema.sql` y luego `db/auditoria_triggers.sql`. Si instalaste el portal de usuarios, ejecuta también `db/auditoria_portal_triggers.sql` después de los triggers principales. Importa los triggers después de las migraciones de tablas. Estos triggers registran inserciones, cambios y eliminaciones con los valores anteriores/nuevos y el actor de la sesión; los hashes de contraseña y el contenido de los mensajes se excluyen deliberadamente. Los snapshots pueden contener datos personales y quedan disponibles para el rol Auditor. Las modificaciones en cascada por claves foráneas se reflejan en el evento de eliminación del registro padre, ya que MySQL no ejecuta triggers para las filas eliminadas por cascada.
 
-## Configuracion esperada
+El registro de inicio/cierre de sesión, intentos de autenticación y solicitudes de contacto se escribe directamente en `Auditoria`. Los cambios de datos quedan garantizados por triggers: si falla la escritura del evento de auditoría, también falla la modificación que lo originó.
 
-`php/conexion.php` usa actualmente:
+## Conexión
 
-- Host: `localhost`
-- Usuario: `root`
-- Contrasena: vacia
-- Base de datos: `ecotech`
+[`php/conexion.php`](../php/conexion.php) se conecta a `localhost`, usuario `root`, contraseña vacía y base `ecotech`; luego configura `utf8mb4`. Cambia estos valores si tu instalación local utiliza otras credenciales.
 
-## Tabla requerida: `usuarios`
+## Rutas PHP y tablas
 
-Segun `php/registro.php`, la tabla `usuarios` debe aceptar estos campos:
+| Archivo o módulo | Tablas |
+|---|---|
+| `php/registro.php`, `php/login.php` | `Usuarios` |
+| `php/admin_usuarios.php` | `Usuarios` |
+| `php/admin_empresas.php` (módulo Donantes) | `Donantes` |
+| `php/admin_estados.php` | `Equipos.estado_actual` |
+| `php/admin_puntos.php` | `PuntosRecoleccion`, `Ciudades` |
+| `php/admin_acciones.php` | `Equipos`, `TiposEquipo`, `Donantes`, `Ciudades`, `Diagnosticos`, `Reparaciones`, `Usuarios` |
+| `php/admin_chart_*.php` | `Usuarios`, `Equipos`, `TiposEquipo`, `Donantes`, `Ciudades` |
+| `php/user_panel_api.php` | `Usuarios`, `Equipos`, `TiposEquipo`, `PuntosRecoleccion`, `Conversaciones`, `Mensajes` |
+| `html/tecnico.php` | `Usuarios`, `Equipos`, `TiposEquipo`, `Diagnosticos`, `Reparaciones` |
+| `html/auditor_panel.php` | `Usuarios`, `Auditoria` |
 
-| Columna | Tipo sugerido | Uso |
-|---|---|---|
-| `id` | `INT` autoincremental | Identificador del usuario |
-| `nombre` | `VARCHAR(100)` | Nombre del usuario |
-| `primer_apellido` | `VARCHAR(100)` | Primer apellido |
-| `segundo_apellido` | `VARCHAR(100)` | Segundo apellido |
-| `correo` | `VARCHAR(150)` | Correo unico para login |
-| `contrasena` | `VARCHAR(255)` | Hash generado por `password_hash` |
-| `rol` | `VARCHAR(50)` | Rol como `admin`, `cliente` u `operador` |
+El registro público permite crear cuentas `Usuario` o `Vendedor`; las opciones privilegiadas (`Administrador`, `Tecnico`, `Operador`, `Auditor`) solo se asignan desde el panel administrativo. `Tecnico` accede a `html/tecnico.php` para consultar el inventario, registrar diagnósticos y documentar reparaciones. `Vendedor` puede publicar equipos y responder consultas; `Usuario` puede explorar equipos y conversar con vendedores u operadores. `Operador` atiende solicitudes de recogida desde `html/operator_panel.php`. El panel presenta `Donantes` en la sección que anteriormente mostraba empresas y permite mantener los puntos de entrega.
 
-En el panel de administracion del repositorio actual las consultas usan `id_usuario` como clave primaria de `usuarios` (alias `id` en listados). Si tu tabla aun usa `id`, alineala con el codigo o adapta los `SELECT`/`WHERE` en `php/admin_usuarios.php` y `php/login.php`.
-
-## Tabla usada en el admin: `empresas`
-
-Gestionada desde `php/admin_empresas.php`. Columnas esperadas:
-
-| Columna | Tipo sugerido | Uso |
-|---|---|---|
-| `id_empresa` | `INT` autoincremental | Identificador |
-| `nombre` | `VARCHAR(200)` | Nombre comercial (tambien usado en joins como `em.nombre` en activos) |
-| `nit` | `VARCHAR(32)` | Identificacion fiscal; conviene `UNIQUE` si la regla de negocio lo exige |
-| `direccion` | `VARCHAR(255)` | Direccion |
-| `telefono` | `VARCHAR(40)` | Telefono de contacto |
-| `correo_contacto` | `VARCHAR(120)` | Correo de contacto |
-| `fecha_registro` | `DATETIME` | Fecha de alta; el alta desde el panel puede fijar `NOW()` si el campo se deja vacio |
-
-La eliminacion puede fallar por integridad referencial si existen filas en `activos` con `id_empresa` apuntando a la empresa.
-
-## SQL sugerido
-
-```sql
-CREATE DATABASE IF NOT EXISTS ecotech;
-USE ecotech;
-
-CREATE TABLE IF NOT EXISTS usuarios (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    primer_apellido VARCHAR(100) NOT NULL,
-    segundo_apellido VARCHAR(100) NOT NULL,
-    correo VARCHAR(150) NOT NULL UNIQUE,
-    contrasena VARCHAR(255) NOT NULL,
-    rol VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-Ejemplo de creacion de `empresas` alineado con `php/admin_empresas.php`:
-
-```sql
-CREATE TABLE IF NOT EXISTS empresas (
-    id_empresa INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(200) NOT NULL,
-    nit VARCHAR(32) NOT NULL,
-    direccion VARCHAR(255) NULL,
-    telefono VARCHAR(40) NULL,
-    correo_contacto VARCHAR(120) NOT NULL,
-    fecha_registro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_empresas_nit (nit)
-);
-```
-
-## Relacion con el backend
-
-### Registro
-
-`php/registro.php` ejecuta un `INSERT` con:
-
-- `nombre`
-- `primer_apellido`
-- `segundo_apellido`
-- `correo`
-- `contrasena`
-- `rol`
-
-La contrasena no se guarda en texto plano. Primero se transforma con `password_hash`.
-
-### Login
-
-`php/login.php` consulta:
-
-```sql
-SELECT * FROM usuarios WHERE correo = ?
-```
-
-Despues compara la contrasena enviada con el hash almacenado usando `password_verify`.
-
-## Observaciones
-
-- Si el correo no es unico, el login puede devolver resultados ambiguos.
-- Si la columna `contrasena` es muy corta, el hash podria truncarse. Por eso se recomienda `VARCHAR(255)`.
-- Si se va a desplegar fuera de local, no conviene dejar credenciales directas en `php/conexion.php`.
-
-## Ultima revision
-
-- Fecha: 1 de mayo de 2026
-- Estado: documentada la tabla `empresas`, ejemplo SQL y nota sobre `id_usuario` en el admin.
+Los hashes SHA-256 de cuentas iniciales se reemplazan por hashes seguros de `password_hash` después del primer inicio de sesión exitoso. Las nuevas cuentas siempre usan `password_hash`.

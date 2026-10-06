@@ -85,25 +85,26 @@
                         <div class="col-12 col-sm-6">
                             <label class="form-label" for="nombre">Nombre</label>
                             <input name="nombre" id="nombre" type="text" class="form-control" placeholder="Nombre"
+                                maxlength="100"
                                 required />
                         </div>
 
                         <div class="col-12 col-sm-6">
-                            <label class="form-label" for="primer_apellido">Primer apellido</label>
+                            <label class="form-label" for="primer_apellido">Apellido</label>
                             <input name="primer_apellido" id="primer_apellido" type="text" class="form-control"
-                                placeholder="Primer apellido" required />
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label" for="segundo_apellido">Segundo apellido</label>
-                            <input name="segundo_apellido" id="segundo_apellido" type="text" class="form-control"
-                                placeholder="Segundo apellido" required />
+                                placeholder="Apellido" maxlength="100" required />
                         </div>
 
                         <div class="col-12">
                             <label class="form-label" for="correo">Correo electrónico</label>
                             <input name="correo" id="correo" type="email" class="form-control"
-                                placeholder="tu@correo.com" required />
+                                placeholder="tu@correo.com" maxlength="150" required />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label" for="telefono">Teléfono</label>
+                            <input name="telefono" id="telefono" type="tel" class="form-control"
+                                placeholder="Número de teléfono" maxlength="20" required />
                         </div>
 
                         <div class="col-12">
@@ -113,17 +114,11 @@
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label" for="rol">Rol de usuario</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                                <select name="rol" id="rol" class="form-control" required>
-                                    <option value="" disabled selected>Selecciona un rol</option>
-                                    <option value="admin">Administrador</option>
-                                    <option value="cliente">Cliente</option>
-                                    <option value="operador">Operador</option>
-                                    <option value="tecnico">Técnico</option>
-                                </select>
-                            </div>
+                            <label class="form-label" for="rol">Quiero registrarme como</label>
+                            <select name="rol" id="rol" class="form-control" required>
+                                <option value="Usuario" selected>Usuario: buscar equipos y coordinar recogidas</option>
+                                <option value="Vendedor">Vendedor: publicar equipos para reutilización</option>
+                            </select>
                         </div>
                     </div>
 

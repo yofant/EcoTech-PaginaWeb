@@ -77,7 +77,9 @@ Aunque varias vistas enlazan al logo o al menu usando `index.html`, en el reposi
 
 - Formulario de registro de usuarios.
 - Envia por `POST` a `../php/registro.php`.
-- Solicita nombre, primer apellido, segundo apellido, correo, contrasena y rol.
+- Solicita nombre, apellido, correo, telefono, contrasena y un perfil público `Usuario` o `Vendedor`.
+- Los usuarios acceden a `html/user_panel.php`; los vendedores también pueden publicar equipos.
+- El rol `Operador` accede a `html/operator_panel.php` para responder solicitudes de recogida.
 - Carga `../Js/alertas.js` y SweetAlert2.
 - Usa `../css/Registro.css`.
 - El enlace inferior apunta a `login.html`, pero el archivo correcto hoy es `login_user.php`.
@@ -103,6 +105,20 @@ Aunque varias vistas enlazan al logo o al menu usando `index.html`, en el reposi
 - **Estado:** CRUD de estados de equipos (`admin_estados.php`).
 - Estilos en `../css/admin.css`; Chart.js se carga por CDN al final de la pagina.
 
+### `tecnico.php`
+
+- Accesible únicamente con una cuenta activa de rol `Tecnico`.
+- Presenta el inventario, los estados de los equipos, el resumen de diagnósticos y la actividad del técnico.
+- Permite registrar diagnósticos con el requisito de reparación y costo estimado; actualiza el estado del equipo.
+- Permite registrar reparaciones con repuestos, costo y estado de finalización; guarda los cambios del equipo y del historial de reparación en una transacción.
+- La ruta `tecnico_panel.php` redirige a `tecnico.php` por compatibilidad.
+
+### `auditor_panel.php`
+
+- Accesible únicamente con una cuenta activa de rol `Auditor`.
+- Presenta el registro `Auditoria` en modo de consulta, con filtros por tabla, operación, rango de fechas y texto; los resultados están paginados y pueden mostrar los valores registrados antes/después.
+- El panel no modifica ni crea eventos: muestra la trazabilidad que ya existe en la base de datos.
+
 ## Flujo actual de autenticacion
 
 ### Registro
@@ -119,9 +135,18 @@ Aunque varias vistas enlazan al logo o al menu usando `index.html`, en el reposi
 1. El usuario entra a `html/login_user.php`.
 2. Completa correo y contrasena.
 3. El formulario envia `POST` a `php/login.php`.
-4. El backend consulta la tabla `usuarios` por correo.
-5. Valida la contrasena con `password_verify`.
-6. Redirige con `status=success`, `error_pass`, `error_user` o `error_data`.
+4. El backend consulta la tabla `Usuarios` por `email`.
+5. Valida la contrasena con `password_verify` y actualiza los hashes SHA-256 heredados al primer inicio exitoso.
+6. Redirige al panel correspondiente a administradores, usuarios/vendedores u operadores.
+
+## Portal de usuario, vendedor y operador
+
+1. Los usuarios consultan los equipos publicados, los puntos activos y sus conversaciones.
+2. Una consulta a un vendedor queda vinculada al equipo seleccionado y solo se puede abrir si sigue publicado y pertenece a ese vendedor.
+3. Los mensajes se guardan en `Mensajes` y se consultan periódicamente para actualizar el chat.
+4. El usuario puede iniciar una conversación con un operador para coordinar la recogida; los operadores responden desde su bandeja.
+5. Los vendedores publican equipos usando los tipos existentes en `TiposEquipo`.
+6. Un administrador registra ubicaciones verificadas desde la sección Puntos de entrega.
 
 ## Flujo actual de contacto
 

@@ -9,7 +9,9 @@ La aplicacion hoy funciona como un sitio corporativo con:
 - Landing page con presentacion del proyecto, servicios, equipo y formulario visual de comentarios.
 - Paginas informativas para servicios, nosotros, herramientas, contacto, terminos y productos.
 - Flujo de registro y login conectado a base de datos.
-- Panel de administracion (`html/admin_panel.php`) reservado a usuarios con rol `admin`: resumen con graficos (Chart.js), gestion de usuarios, empresas aliadas, acciones administrativas (reportes, listados) y estados de equipos.
+- Panel de administracion (`html/admin_panel.php`) reservado a usuarios con rol `Administrador`: resumen con graficos (Chart.js), gestion de usuarios y donantes, inventario de equipos, diagnosticos, reparaciones y estados actuales.
+- Portal para usuarios y vendedores con chats persistentes, publicaciones de equipos y puntos de entrega; bandeja para operadores en `html/operator_panel.php`.
+- Registro de cambios de base de datos mediante triggers; el auditor puede revisar los valores antes/después desde `html/auditor_panel.php`.
 
 ## Tecnologias usadas
 
@@ -103,22 +105,28 @@ Ecotech/
 | `html/terminos_condiciones.html` | Contenido legal para el formulario |
 | `html/login_user.php` | Inicio de sesion |
 | `html/registro_user.php` | Registro de usuarios |
+| `html/user_panel.php` | Portal de usuarios/vendedores: catálogo, publicaciones, puntos y chat |
+| `html/operator_panel.php` | Bandeja de conversaciones de recogida para operadores |
+| `html/tecnico.php` | Panel de técnicos: inventario, diagnósticos y reparaciones |
+| `html/auditor_panel.php` | Panel de consulta y filtrado del registro de auditoría |
 | `html/productos.html` | Pagina creada pero aun incompleta |
-| `html/admin_panel.php` | Panel admin: metricas, graficos, usuarios, empresas, acciones, estados |
+| `html/admin_panel.php` | Panel admin: metricas, graficos, usuarios, donantes, equipos, diagnosticos, reparaciones y estados |
 
 ## Backend disponible
 
 | Archivo | Funcion actual |
 |---|---|
 | `php/conexion.php` | Conexion `mysqli` a la base de datos `ecotech` |
-| `php/registro.php` | Registra usuarios en la tabla `usuarios` usando `password_hash` |
-| `php/login.php` | Valida credenciales con `password_verify` y redirige con estados en query string |
+| `php/registro.php` | Registra usuarios en `Usuarios` usando `password_hash` |
+| `php/login.php` | Valida credenciales en `Usuarios`, migra hashes SHA-256 iniciales y redirige según rol |
 | `php/admin_usuarios.php` | CRUD de usuarios para el panel admin |
-| `php/admin_empresas.php` | CRUD de empresas aliadas para el panel admin |
-| `php/admin_estados.php` | CRUD de estados de equipos para el panel admin |
-| `php/admin_acciones.php` | Reportes, metricas y listados del panel de acciones |
+| `php/admin_empresas.php` | CRUD de donantes para el panel admin |
+| `php/admin_estados.php` | Resume equipos por el valor actual de `estado_actual` |
+| `php/admin_acciones.php` | Muestra equipos, diagnosticos y reparaciones |
 | `php/admin_dashboard_data.php` | Agrega datos para graficos del resumen |
 | `php/admin_chart_*.php` | Consultas por grafico (equipos, ubicaciones, estados, usuarios) |
+| `php/admin_puntos.php` | Administración de puntos de entrega verificados |
+| `php/user_panel_api.php` | API autenticada para catálogo, chats, publicaciones y puntos |
 
 ## JavaScript disponible
 
@@ -133,9 +141,12 @@ Ecotech/
 
 1. Coloca el proyecto dentro de `htdocs` de XAMPP.
 2. Inicia Apache y MySQL desde el panel de XAMPP.
-3. Crea una base de datos llamada `ecotech`.
-4. Crea la tabla `usuarios` con las columnas esperadas por el backend.
-5. Abre en el navegador la ruta `http://localhost/Ecotech/html/index.php`.
+3. Importa `db/ECOTECH_KTOR_SCHEMA.sql` en MySQL/MariaDB para crear el esquema base de `ecotech`.
+4. Importa `db/user_portal_schema.sql` una sola vez después del esquema base para habilitar chats, publicaciones y puntos de entrega.
+5. Importa una sola vez `db/auditoria_schema.sql` y después `db/auditoria_triggers.sql`. Si vas a usar las tablas del portal, importa también `db/auditoria_portal_triggers.sql` después de `db/user_portal_schema.sql` y de los triggers principales.
+6. Si ya existe una base con datos que debas conservar, respáldala antes de importar el esquema base: ese script elimina y vuelve a crear las tablas.
+7. Registra puntos de entrega reales y confirmados desde el panel administrativo antes de mostrarlos a los usuarios.
+8. Abre en el navegador la ruta `http://localhost/Ecotech/html/index.php`.
 
 La conexion actual esta definida en `php/conexion.php` con estos valores:
 
@@ -144,7 +155,7 @@ La conexion actual esta definida en `php/conexion.php` con estos valores:
 - Contrasena: vacia
 - Base de datos: `ecotech`
 
-La estructura minima esperada para la autenticacion esta documentada en [docs/BASE_DE_DATOS.md](/D:/Xampp/Xampp/htdocs/Ecotech/docs/BASE_DE_DATOS.md).
+El mapeo de rutas PHP a tablas está documentado en [docs/BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md).
 
 ## Estado actual del proyecto
 
@@ -156,7 +167,7 @@ Lo que ya esta funcionando:
 - Login con validacion de password hasheado.
 - Alertas visuales para flujos de autenticacion.
 - Validacion del checkbox de terminos en contacto.
-- Panel de administracion con graficos de resumen, gestion de usuarios, empresas, reportes y estados.
+- Panel de administracion con graficos de resumen, gestion de usuarios y donantes, e informacion de equipos, diagnosticos, reparaciones y estados.
 
 Pendientes importantes detectados en el codigo actual:
 

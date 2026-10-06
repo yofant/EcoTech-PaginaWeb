@@ -3,6 +3,8 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+session_start();
+require_once __DIR__ . '/conexion.php';
 ob_start();
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -37,6 +39,16 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit();
 }
 
+$actorContacto = mb_substr('Contacto web · ' . $email, 0, 100, 'UTF-8');
+ecotechSetAuditActor($conn, $actorContacto);
+try {
+    ecotechLogAuditEvent($conn, 'Contacto', 'ENVIO', null, 'Formulario de contacto recibido de ' . $nombre);
+} catch (RuntimeException $e) {
+    ob_end_clean();
+    http_response_code(503);
+    exit('No se pudo registrar la solicitud de contacto. Inténtalo de nuevo más tarde.');
+}
+
 $mail = new PHPMailer(true);
 
 try {
@@ -69,4 +81,3 @@ try {
     ecotech_redirect_to_index('?status=contact_error');
     exit();
 }
-

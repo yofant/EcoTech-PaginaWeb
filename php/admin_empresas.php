@@ -8,7 +8,7 @@ if (!defined('ECOTECH_ADMIN_EMPRESAS')) {
     $empresaForm = [
         'id_empresa' => '',
         'nombre' => '',
-        'nit' => '',
+        'nit' => 'Empresa',
         'direccion' => '',
         'telefono' => '',
         'correo_contacto' => '',
@@ -26,205 +26,150 @@ if (!defined('ECOTECH_ADMIN_EMPRESAS')) {
     }
 
     $empresaCrudStatus = $_GET['empresa_crud_status'] ?? '';
-
     if ($empresaCrudStatus === 'created') {
-        $crudEmpresaMessage = 'Empresa registrada correctamente.';
+        $crudEmpresaMessage = 'Donante registrado correctamente.';
         $crudEmpresaMessageType = 'success';
     } elseif ($empresaCrudStatus === 'updated') {
-        $crudEmpresaMessage = 'Empresa actualizada correctamente.';
+        $crudEmpresaMessage = 'Donante actualizado correctamente.';
         $crudEmpresaMessageType = 'success';
     } elseif ($empresaCrudStatus === 'deleted') {
-        $crudEmpresaMessage = 'Empresa eliminada correctamente.';
+        $crudEmpresaMessage = 'Donante eliminado correctamente.';
         $crudEmpresaMessageType = 'success';
     } elseif ($empresaCrudStatus === 'invalid') {
-        $crudEmpresaMessage = 'Completa los datos obligatorios antes de guardar.';
+        $crudEmpresaMessage = 'Completa todos los datos obligatorios antes de guardar.';
         $crudEmpresaMessageType = 'error';
     } elseif ($empresaCrudStatus === 'not_found') {
-        $crudEmpresaMessage = 'La empresa solicitada no existe o ya fue eliminada.';
+        $crudEmpresaMessage = 'El donante solicitado no existe o ya fue eliminado.';
         $crudEmpresaMessageType = 'warning';
     } elseif ($empresaCrudStatus === 'db_error') {
-        $crudEmpresaMessage = 'Ocurrio un error con la base de datos al procesar la solicitud.';
-        $crudEmpresaMessageType = 'error';
-    } elseif ($empresaCrudStatus === 'duplicate') {
-        $crudEmpresaMessage = 'El NIT ingresado ya esta registrado en otra empresa.';
+        $crudEmpresaMessage = 'Ocurrio un error con la base de datos al procesar el donante.';
         $crudEmpresaMessageType = 'error';
     } elseif ($empresaCrudStatus === 'in_use') {
-        $crudEmpresaMessage = 'No se puede eliminar: hay equipos vinculados a esta empresa.';
+        $crudEmpresaMessage = 'No se puede eliminar: hay equipos asociados a este donante.';
         $crudEmpresaMessageType = 'warning';
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['empresa_crud_action'] ?? '') === 'save_empresa')) {
-        $idEmpresa = isset($_POST['id_empresa']) ? (int) $_POST['id_empresa'] : 0;
+        $idDonante = (int) ($_POST['id_empresa'] ?? 0);
         $nombre = trim($_POST['nombre'] ?? '');
-        $nit = trim($_POST['nit'] ?? '');
+        $tipo = trim($_POST['nit'] ?? '');
         $direccion = trim($_POST['direccion'] ?? '');
         $telefono = trim($_POST['telefono'] ?? '');
-        $correoContacto = trim($_POST['correo_contacto'] ?? '');
-        $fechaRegistroInput = trim($_POST['fecha_registro'] ?? '');
-        $modoEmpresaFormulario = $idEmpresa > 0 ? 'editar' : 'crear';
-
+        $email = trim($_POST['correo_contacto'] ?? '');
+        $modoEmpresaFormulario = $idDonante > 0 ? 'editar' : 'crear';
         $empresaForm = [
-            'id_empresa' => $idEmpresa > 0 ? (string) $idEmpresa : '',
+            'id_empresa' => $idDonante > 0 ? (string) $idDonante : '',
             'nombre' => $nombre,
-            'nit' => $nit,
+            'nit' => $tipo,
             'direccion' => $direccion,
             'telefono' => $telefono,
-            'correo_contacto' => $correoContacto,
-            'fecha_registro' => $fechaRegistroInput
+            'correo_contacto' => $email,
+            'fecha_registro' => ''
         ];
 
-        if ($nombre === '' || $nit === '' || !filter_var($correoContacto, FILTER_VALIDATE_EMAIL)) {
-            $crudEmpresaMessage = 'Nombre, NIT y correo de contacto valido son obligatorios.';
+        if (
+            $nombre === '' ||
+            strlen($nombre) > 150 ||
+            $tipo === '' ||
+            strlen($tipo) > 20 ||
+            $direccion === '' ||
+            strlen($direccion) > 250 ||
+            $telefono === '' ||
+            strlen($telefono) > 20 ||
+            !filter_var($email, FILTER_VALIDATE_EMAIL) ||
+            strlen($email) > 150
+        ) {
+            $crudEmpresaMessage = 'Nombre, tipo, direccion, telefono y correo valido son obligatorios.';
             $crudEmpresaMessageType = 'error';
-        } else {
-            if ($idEmpresa > 0) {
-                $stmtExiste = $conn->prepare('SELECT id_empresa FROM empresas WHERE id_empresa = ?');
-                $stmtExiste->bind_param('i', $idEmpresa);
-                $stmtExiste->execute();
-                $resExiste = $stmtExiste->get_result();
-                $existe = $resExiste->fetch_assoc();
-                $stmtExiste->close();
-
-                if (!$existe) {
-                    adminEmpresasRedirect(['empresa_crud_status' => 'not_found']);
-                }
-
-                $stmt = $conn->prepare('
-                    UPDATE empresas
-                    SET nombre = ?, nit = ?, direccion = ?, telefono = ?, correo_contacto = ?
-                    WHERE id_empresa = ?
-                ');
-                $stmt->bind_param('sssssi', $nombre, $nit, $direccion, $telefono, $correoContacto, $idEmpresa);
-
-                if ($stmt->execute()) {
-                    $stmt->close();
-                    adminEmpresasRedirect(['empresa_crud_status' => 'updated']);
-                }
-
-                $errno = $stmt->errno;
-                $stmt->close();
-
-                if ($errno === 1062) {
-                    $crudEmpresaMessage = 'El NIT ingresado ya esta en uso.';
-                    $crudEmpresaMessageType = 'error';
-                } else {
-                    $crudEmpresaMessage = 'No fue posible actualizar la empresa.';
-                    $crudEmpresaMessageType = 'error';
-                }
-            } else {
-                $fechaRegistroSql = date('Y-m-d H:i:s');
-                if ($fechaRegistroInput !== '') {
-                    $dt = DateTime::createFromFormat('Y-m-d\TH:i', $fechaRegistroInput);
-                    if ($dt instanceof DateTime) {
-                        $fechaRegistroSql = $dt->format('Y-m-d H:i:s');
-                    }
-                }
-
-                $stmt = $conn->prepare('
-                    INSERT INTO empresas (nombre, nit, direccion, telefono, correo_contacto, fecha_registro)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ');
-                $stmt->bind_param('ssssss', $nombre, $nit, $direccion, $telefono, $correoContacto, $fechaRegistroSql);
-
-                if ($stmt->execute()) {
-                    $stmt->close();
-                    adminEmpresasRedirect(['empresa_crud_status' => 'created']);
-                }
-
-                $errno = $stmt->errno;
-                $stmt->close();
-
-                if ($errno === 1062) {
-                    $crudEmpresaMessage = 'El NIT ingresado ya existe en la base de datos.';
-                    $crudEmpresaMessageType = 'error';
-                } else {
-                    $crudEmpresaMessage = 'No fue posible registrar la empresa. Verifica que la tabla tenga las columnas esperadas.';
-                    $crudEmpresaMessageType = 'error';
-                }
+        } elseif ($idDonante > 0) {
+            $stmtExiste = $conn->prepare("SELECT donante_id FROM `Donantes` WHERE donante_id = ?");
+            $stmtExiste->bind_param('i', $idDonante);
+            $stmtExiste->execute();
+            $donanteExiste = $stmtExiste->get_result()->fetch_assoc();
+            $stmtExiste->close();
+            if (!$donanteExiste) {
+                adminEmpresasRedirect(['empresa_crud_status' => 'not_found']);
             }
+
+            $stmt = $conn->prepare("
+                UPDATE `Donantes`
+                SET tipo = ?, nombre = ?, email = ?, telefono = ?, direccion = ?
+                WHERE donante_id = ?
+            ");
+            $stmt->bind_param("sssssi", $tipo, $nombre, $email, $telefono, $direccion, $idDonante);
+            if ($stmt->execute() && $stmt->affected_rows >= 0) {
+                $stmt->close();
+                adminEmpresasRedirect(['empresa_crud_status' => 'updated']);
+            }
+            $stmt->close();
+            adminEmpresasRedirect(['empresa_crud_status' => 'db_error']);
+        } else {
+            $stmt = $conn->prepare("
+                INSERT INTO `Donantes` (tipo, nombre, email, telefono, direccion)
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->bind_param("sssss", $tipo, $nombre, $email, $telefono, $direccion);
+            if ($stmt->execute()) {
+                $stmt->close();
+                adminEmpresasRedirect(['empresa_crud_status' => 'created']);
+            }
+            $stmt->close();
+            adminEmpresasRedirect(['empresa_crud_status' => 'db_error']);
         }
     }
 
     if (($_GET['empresa_action'] ?? '') === 'delete' && isset($_GET['id_empresa'])) {
-        $idEliminar = (int) $_GET['id_empresa'];
-
-        $stmtCheck = $conn->prepare('SELECT id_empresa FROM empresas WHERE id_empresa = ?');
-        $stmtCheck->bind_param('i', $idEliminar);
-        $stmtCheck->execute();
-        $resCheck = $stmtCheck->get_result();
-        $filaEmp = $resCheck->fetch_assoc();
-        $stmtCheck->close();
-
-        if (!$filaEmp) {
-            adminEmpresasRedirect(['empresa_crud_status' => 'not_found']);
+        $idDonante = (int) $_GET['id_empresa'];
+        $stmt = $conn->prepare("DELETE FROM `Donantes` WHERE donante_id = ?");
+        $stmt->bind_param('i', $idDonante);
+        if ($stmt->execute()) {
+            $deleted = $stmt->affected_rows > 0;
+            $stmt->close();
+            adminEmpresasRedirect(['empresa_crud_status' => $deleted ? 'deleted' : 'not_found']);
         }
-
-        $stmtEliminar = $conn->prepare('DELETE FROM empresas WHERE id_empresa = ?');
-        $stmtEliminar->bind_param('i', $idEliminar);
-
-        if ($stmtEliminar->execute()) {
-            $stmtEliminar->close();
-            adminEmpresasRedirect(['empresa_crud_status' => 'deleted']);
-        }
-
-        $errno = $stmtEliminar->errno;
-        $stmtEliminar->close();
-
-        if ($errno === 1451) {
-            adminEmpresasRedirect(['empresa_crud_status' => 'in_use']);
-        }
-
-        adminEmpresasRedirect(['empresa_crud_status' => 'db_error']);
+        $errorCode = $stmt->errno;
+        $stmt->close();
+        adminEmpresasRedirect(['empresa_crud_status' => $errorCode === 1451 ? 'in_use' : 'db_error']);
     }
 
     if (($_GET['empresa_action'] ?? '') === 'edit' && isset($_GET['id_empresa'])) {
-        $idEditar = (int) $_GET['id_empresa'];
-        $stmtEditar = $conn->prepare('
-            SELECT id_empresa, nombre, nit, direccion, telefono, correo_contacto, fecha_registro
-            FROM empresas
-            WHERE id_empresa = ?
-        ');
-        $stmtEditar->bind_param('i', $idEditar);
-        $stmtEditar->execute();
-        $resEditar = $stmtEditar->get_result();
-        $empresaEditar = $resEditar->fetch_assoc();
-        $stmtEditar->close();
+        $idDonante = (int) $_GET['id_empresa'];
+        $stmt = $conn->prepare("
+            SELECT donante_id, tipo, nombre, email, telefono, direccion, fecha_registro
+            FROM `Donantes`
+            WHERE donante_id = ?
+        ");
+        $stmt->bind_param('i', $idDonante);
+        $stmt->execute();
+        $donante = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
 
-        if ($empresaEditar) {
-            $modoEmpresaFormulario = 'editar';
-            $fr = $empresaEditar['fecha_registro'] ?? '';
-            $fechaForm = '';
-            if ($fr !== '' && $fr !== null) {
-                $dt = date_create($fr);
-                if ($dt) {
-                    $fechaForm = $dt->format('Y-m-d\TH:i');
-                }
-            }
-            $empresaForm = [
-                'id_empresa' => (string) ($empresaEditar['id_empresa'] ?? ''),
-                'nombre' => $empresaEditar['nombre'] ?? '',
-                'nit' => $empresaEditar['nit'] ?? '',
-                'direccion' => $empresaEditar['direccion'] ?? '',
-                'telefono' => $empresaEditar['telefono'] ?? '',
-                'correo_contacto' => $empresaEditar['correo_contacto'] ?? '',
-                'fecha_registro' => $fechaForm
-            ];
-        } else {
+        if (!$donante) {
             adminEmpresasRedirect(['empresa_crud_status' => 'not_found']);
         }
+        $modoEmpresaFormulario = 'editar';
+        $empresaForm = [
+            'id_empresa' => $donante['donante_id'],
+            'nombre' => $donante['nombre'],
+            'nit' => $donante['tipo'],
+            'direccion' => $donante['direccion'],
+            'telefono' => $donante['telefono'],
+            'correo_contacto' => $donante['email'],
+            'fecha_registro' => $donante['fecha_registro']
+        ];
     }
 
-    $consultaEmpresas = '
-        SELECT id_empresa, nombre, nit, direccion, telefono, correo_contacto, fecha_registro
-        FROM empresas
-        ORDER BY id_empresa DESC
-    ';
-
-    $resultadoEmpresas = $conn->query($consultaEmpresas);
-
-    if ($resultadoEmpresas) {
-        while ($fila = $resultadoEmpresas->fetch_assoc()) {
-            $empresas[] = $fila;
-        }
+    $resultadoDonantes = $conn->query("
+        SELECT donante_id AS id_empresa, nombre, tipo AS nit, direccion, telefono,
+               email AS correo_contacto, fecha_registro
+        FROM `Donantes`
+        ORDER BY donante_id DESC
+    ");
+    if (!$resultadoDonantes) {
+        die("Error al consultar donantes: " . $conn->error);
+    }
+    while ($donante = $resultadoDonantes->fetch_assoc()) {
+        $empresas[] = $donante;
     }
 }
+?>

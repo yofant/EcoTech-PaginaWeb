@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
             dashboardPanels.forEach((panel) => panel.classList.remove("is-active"));
 
             link.classList.add("active");
+            navLinks.forEach((navLink) => navLink.setAttribute("aria-current", navLink === link ? "page" : "false"));
 
             const targetPanel = document.getElementById(targetId);
             if (targetPanel) {

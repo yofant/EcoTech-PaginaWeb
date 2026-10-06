@@ -9,12 +9,11 @@ ini_set('display_startup_errors', 1);
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+session_start();
+require_once __DIR__ . '/conexion.php';
 ob_start();
 
 require __DIR__ . '/../vendor/autoload.php';
-
-// Logging para validar recepción de datos
-file_put_contents(__DIR__ . '/contacto_log.txt', date('Y-m-d H:i:s') . ' - Datos recibidos: ' . print_r($_POST, true) . "\n", FILE_APPEND);
 
 function ecotech_redirect_to_contacto(string $query): void
 {
@@ -44,6 +43,16 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     ob_end_clean();
     ecotech_redirect_to_contacto('?status=invalid_email');
     exit();
+}
+
+$actorContacto = mb_substr('Contacto web · ' . $email, 0, 100, 'UTF-8');
+ecotechSetAuditActor($conn, $actorContacto);
+try {
+    ecotechLogAuditEvent($conn, 'Contacto', 'ENVIO', null, 'Formulario de contacto recibido de ' . $nombre_completo);
+} catch (RuntimeException $e) {
+    ob_end_clean();
+    http_response_code(503);
+    exit('No se pudo registrar la solicitud de contacto. Inténtalo de nuevo más tarde.');
 }
 
 $mail = new PHPMailer(true);

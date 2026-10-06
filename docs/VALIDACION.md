@@ -15,15 +15,15 @@ El objetivo de este documento es dejar claro que ya funciona, que esta incomplet
 - `Js/alertas.js` centraliza estados de login y registro con SweetAlert2.
 - `Js/Valid_checkbox.js` valida el checkbox de terminos en el formulario de contacto.
 - La estructura general del frontend esta organizada por pagina y por hoja de estilos.
-- Panel `html/admin_panel.php` con sesion y rol admin, modulos PHP separados por dominio (usuarios, empresas, estados, acciones, datos de graficos).
+- Panel `html/admin_panel.php` con sesion y rol `Administrador`, modulos PHP para usuarios, donantes, estados actuales, equipos, diagnosticos y reparaciones.
 - Grafico de ubicaciones en el resumen admin: el dataset de Chart.js incluye la propiedad `data` con los totales por etiqueta.
-- Grafico de estados en el resumen admin: la consulta agrupa y etiqueta por `nombre_estado`, no por `id_estado`, para que el eje muestre nombres legibles (por ejemplo, "Baja").
-- Modulo de empresas en el admin: formularios con `id` unicos en campos (`empresa_*`) para no colisionar con el formulario de usuarios; mensajes CRUD separados (`$crudEmpresaMessage`).
+- Grafico de estados en el resumen admin: la consulta agrupa por el campo `Equipos.estado_actual`.
+- Modulo de donantes en el admin: usa la tabla `Donantes` y los campos de contacto del esquema nuevo.
 
 ### Inconsistencias funcionales
 
 - `html/contacto.html` envia el formulario a `../php/registro.php`.
-- `php/registro.php` espera `nombre`, `primer_apellido`, `segundo_apellido`, `correo`, `contrasena` y `rol`.
+- `php/registro.php` espera `nombre`, `primer_apellido`, `correo`, `telefono` y `contrasena`; asigna el rol `Operador`.
 - `html/contacto.html` solo envia `nombre`, `primer_apellido` y `correo`.
 - Resultado: el flujo de contacto no coincide con el backend y no representa una funcionalidad terminada.
 

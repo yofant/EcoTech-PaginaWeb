@@ -53,6 +53,15 @@ function mostrarAlerta(status) {
         return;
     }
 
+    if (status === "account_inactive") {
+        Swal.fire({
+            title: "Cuenta inactiva",
+            text: "Contacta a un administrador para recuperar el acceso.",
+            icon: "warning"
+        });
+        return;
+    }
+
     if (status === "error_data") {
         Swal.fire({
             title: "ERROR EN LA BASE DE DATOS",
@@ -74,6 +83,15 @@ function mostrarAlerta(status) {
             confirmButtonColor: ECO.primary,
             confirmButtonText: "Continuar",
             customClass: { popup: "eco-alerta" }
+        });
+        return;
+    }
+
+    if (status === "duplicate_email") {
+        Swal.fire({
+            title: "Correo ya registrado",
+            text: "Usa otro correo o inicia sesión con esta cuenta.",
+            icon: "warning"
         });
         return;
     }
